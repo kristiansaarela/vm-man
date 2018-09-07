@@ -1,0 +1,81 @@
+Vagrant.require_version ">= 2.1.0"
+
+# Helper for merging configurations
+class ::Hash
+  def deep_merge(second)
+      merger = proc { |key, v1, v2| Hash === v1 && Hash === v2 ? v1.merge(v2, &merger) : v2 }
+      self.merge(second, &merger)
+  end
+end
+
+# Create cache dirs
+cache_dir     = "./.cache/"
+cache_apt_dir = "./.cache/apt"
+FileUtils.mkdir_p(cache_apt_dir) unless File.exists? cache_apt_dir
+
+Vagrant.configure(2) do |config|
+  ## Default configuration, and optional local overrides
+  settings = {
+    "debug" => false,
+    "{vars.vm_name}" => {
+      "memory" => 1000,
+      "cpus"   => 2,
+      "forwards" => {}
+    }
+  }
+
+  if File.exists? "local.yml"
+    require "yaml"
+    settings = settings.deep_merge(YAML.load_file "local.yml")
+  end
+
+  if settings['debug']
+    puts settings.inspect
+  end
+
+  ## Hostmanager updates hosts files with all known VMs
+  #config.hostmanager.enabled = true
+  #config.hostmanager.manage_host = true
+  #config.hostmanager.manage_guest = true
+  #config.hostmanager.include_offline = true
+
+  ## Use personal keys for git checkouts inside vagrant ##
+  config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/home/vagrant/.ssh/id_rsa.pub"
+  config.vm.provision "file", source: "~/.ssh/id_rsa", destination: "/home/vagrant/.ssh/id_rsa"
+
+  config.vm.define :{vars.vm_name}, primary: true do |node|
+    node.vm.box = "{vars.box}"
+    #node.vm.box_version = "20180509.0.0" # Some versions forget to add 'vagrant' user...
+
+    node.vm.synced_folder ".", "/vagrant", mount_options: ["uid=1002", "gid=33", "dmode=777", "fmode=777"]
+
+    node.vm.provider "virtualbox" do |virtualbox|
+      # Assign CPU and Memory limits
+      virtualbox.memory = settings["{vars.vm_name}"]["memory"]
+      virtualbox.cpus   = settings["{vars.vm_name}"]["cpus"]
+    end
+
+    # Set IP and local hostname
+    node.vm.network "private_network", ip: "192.168.11.200"
+    #node.vm.hostname = ".net"
+    #node.hostmanager.aliases = ""
+
+    # Set up configured port forwards
+    if settings["{vars.vm_name}"] && settings["{vars.vm_name}"]["forwards"]
+      settings["{vars.vm_name}"]["forwards"].each do |src, dst|
+        node.vm.network "forwarded_port", guest: src, host: dst
+      end
+    end
+
+    node.vm.synced_folder cache_apt_dir, "/var/cache/apt/archives/"
+    node.vm.synced_folder cache_dir, "/home/vagrant/.cache/"
+
+    #node.vm.provision "ansible_local" do |ansible|
+      #ansible.playbook = "ansible/combined.yml"
+      #ansible.verbose  = true
+      #ansible.limit    = "all"
+    #end
+
+    #node.vm.provision "shell", inline: "sudo service apache2 restart", run: "always"
+  end
+end

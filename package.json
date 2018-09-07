@@ -1,0 +1,17 @@
+{
+  "name": "vm-man",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.3",
+    "lodash": "^4.17.10",
+    "node-ssh": "^5.1.2",
+    "ws": "^6.0.0"
+  }
+}
