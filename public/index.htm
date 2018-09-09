@@ -30,14 +30,6 @@
 			padding: 2%;
 		}
 
-		/*
-		.flex-item:nth-child(2) {
-			order: 0;
-			flex: 0 1 auto;
-			align-self: stretch;
-		}
-		*/
-
 		#form {
 			background: #eee;
 			font-family: Helvetica;
@@ -116,7 +108,7 @@
 				}, false);
 
 				this.socket.addEventListener('message', (ev) => {
-					console.log('Socket message received', ev.data)
+					console.log('Socket message received', typeof ev.data, ev.data)
 					if (!self.listeners.length) {
 						return;
 					}
@@ -168,7 +160,8 @@
 		const socket = new SocketClient();
 
 		socket.onMessage((data) => {
-			console.log('msg: ', data);
+			console.log(typeof data)
+			console.log('msg: ', data.toString());
 		});
 
 		// Helpers

@@ -4,6 +4,9 @@ const fs = require('fs');
 const path = require('path');
 const _ = require('lodash');
 const WebSocket = require('ws');
+const { spawn } = require('child_process');
+const mkdir = require('./mkdir')
+const logger = require('./logger')
 const config = {
 	port: 81
 };
@@ -29,7 +32,7 @@ wss.on('connection', (ws) => {
 
 		if (json) {
 			try {
-				handleJSON(json);
+				handleJSON(ws, json);
 			} catch (err) {
 				console.log(err);
 			}
@@ -47,7 +50,7 @@ wss.on('connection', (ws) => {
 	});
 });
 
-function handleJSON (data) {
+function handleJSON (ws, data) {
 	switch (data.action) {
 		case 'new-vm':
 			const defaults = {
@@ -64,9 +67,36 @@ function handleJSON (data) {
 				template = template.replaceAll(pattern, template_vars[key]);
 			})
 
-			console.log('new vm Vagrantfile generated')
+			logger.log('new vm Vagrantfile generated')
+
+			const vm_path = path.join(process.cwd(), 'vms', template_vars.vm_name)
+
+			mkdir(vm_path)
+			fs.writeFileSync(path.join(vm_path, 'Vagrantfile'), template)
+
+			//const vagrant = spawn('vagrant', ['up'], { cwd: vm_path });
+			const vagrant = spawn('ls', [], { cwd: vm_path });
+
+			vagrant.stdout.on('data', (chunk) => {
+				console.log('stdout', chunk.toString());
+
+				ws.send(chunk)
+			});
+
+			vagrant.stderr.on('data', (chunk) => {
+				console.log('stderr', chunk.toString())
+
+				ws.send(chunk)
+			})
+
+			vagrant.on('close', (code) => {
+				console.log('exit code:', code)
+
+			})
 		break;
 	}
 }
 
-console.log('Socket Server started', config);
+function mkdirIfPossible (dir_path) {
+
+}
