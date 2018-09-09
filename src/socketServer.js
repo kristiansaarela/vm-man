@@ -17,6 +17,7 @@ String.prototype.replaceAll = function(pattern, replacement) {
 	return this.split(pattern).join(replacement);
 };
 
+// TODO: handle dropped clients
 wss.on('connection', (ws) => {
 	ws.send('hello');
 
@@ -41,8 +42,6 @@ wss.on('connection', (ws) => {
 		if (text) {
 			console.log(text);
 		}
-
-		ws.send('ack');
 	});
 
 	ws.on('close', () => {
@@ -74,29 +73,33 @@ function handleJSON (ws, data) {
 			mkdir(vm_path)
 			fs.writeFileSync(path.join(vm_path, 'Vagrantfile'), template)
 
-			//const vagrant = spawn('vagrant', ['up'], { cwd: vm_path });
-			const vagrant = spawn('ls', [], { cwd: vm_path });
+			const vagrant = spawn('vagrant', ['up'], { cwd: vm_path });
+			//const vagrant = spawn('ls', ['-la'], { cwd: vm_path });
 
 			vagrant.stdout.on('data', (chunk) => {
 				console.log('stdout', chunk.toString());
 
-				ws.send(chunk)
+				ws.send(JSON.stringify({
+					action: 'console',
+					data: chunk.toString(),
+				}));
 			});
 
 			vagrant.stderr.on('data', (chunk) => {
 				console.log('stderr', chunk.toString())
 
-				ws.send(chunk)
+				ws.send(JSON.stringify({
+					action: 'console',
+					data: chunk.toString(),
+				}));
 			})
 
 			vagrant.on('close', (code) => {
-				console.log('exit code:', code)
-
+				ws.send(JSON.stringify({
+					action: 'console',
+					data: `exit code: ${code}`,
+				}));
 			})
 		break;
 	}
-}
-
-function mkdirIfPossible (dir_path) {
-
 }
