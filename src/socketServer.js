@@ -5,10 +5,10 @@ const path = require('path');
 const _ = require('lodash');
 const WebSocket = require('ws');
 const { spawn } = require('child_process');
-const mkdir = require('./mkdir')
-const logger = require('./logger')
+const mkdir = require('./mkdir');
+const logger = require('./logger');
 const config = {
-	port: 81
+	port: 81,
 };
 
 const wss = new WebSocket.Server(config);
@@ -22,8 +22,8 @@ wss.on('connection', (ws) => {
 	ws.send('hello');
 
 	ws.on('message', (data) => {
-		let json = null
-		let text = null
+		let json = null;
+		let text = null;
 
 		try {
 			json = JSON.parse(data);
@@ -35,26 +35,28 @@ wss.on('connection', (ws) => {
 			try {
 				handleJSON(ws, json);
 			} catch (err) {
-				console.log(err);
+				logger.error(err);
 			}
 		}
 
 		if (text) {
-			console.log(text);
+			logger.log(text);
 		}
 	});
 
 	ws.on('close', () => {
-		console.log('bye');
+		logger.log('bye');
 	});
 });
 
 function handleJSON (ws, data) {
 	switch (data.action) {
-		case 'new-vm':
+		case 'new-vm': {
 			const defaults = {
 				vm_name: 'dev',
 				box: 'ubuntu/bionic64',
+				priv_network_ip: '192.168.2.10',
+
 			};
 
 			const template_vars = _.merge({}, data.data, defaults);
@@ -66,12 +68,12 @@ function handleJSON (ws, data) {
 				template = template.replaceAll(pattern, template_vars[key]);
 			})
 
-			logger.log('new vm Vagrantfile generated')
+			logger.log('new vm Vagrantfile generated');
 
-			const vm_path = path.join(process.cwd(), 'vms', template_vars.vm_name)
+			const vm_path = path.join(process.cwd(), 'vms', template_vars.vm_name);
 
-			mkdir(vm_path)
-			fs.writeFileSync(path.join(vm_path, 'Vagrantfile'), template)
+			mkdir(vm_path);
+			fs.writeFileSync(path.join(vm_path, 'Vagrantfile'), template);
 
 			const vagrant = spawn('vagrant', ['up'], { cwd: vm_path });
 			//const vagrant = spawn('ls', ['-la'], { cwd: vm_path });
@@ -86,20 +88,21 @@ function handleJSON (ws, data) {
 			});
 
 			vagrant.stderr.on('data', (chunk) => {
-				console.log('stderr', chunk.toString())
+				console.log('stderr', chunk.toString());
 
 				ws.send(JSON.stringify({
 					action: 'console',
 					data: chunk.toString(),
 				}));
-			})
+			});
 
 			vagrant.on('close', (code) => {
 				ws.send(JSON.stringify({
 					action: 'console',
 					data: `exit code: ${code}`,
 				}));
-			})
+			});
+		}
 		break;
 	}
 }

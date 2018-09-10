@@ -98,6 +98,7 @@
 
 			connect() {
 				let self = this;
+
 				this.socket = new WebSocket(this.url);
 
 				this.socket.addEventListener('close', () => {
@@ -182,11 +183,12 @@
 
 		function handleJSON(json) {
 			switch (json.action) {
-				case 'console':
+				case 'console': {
 					const p = document.createElement('p')
 
 					p.innerText = json.data
 					$('console').appendChild(p)
+				}
 				break;
 			}
 		}
@@ -212,9 +214,15 @@
 					<p>VM name (defaults to dev)</p>
 					<input type="text" name="vm_name">
 				</label>
+
 				<label>
 					<p>Base box (defaults to ubuntu/bionic64)</p>
 					<input type="text" name="box">
+				</label>
+
+				<label>
+					<p>Private network IP (defaults to 192.168.2.10)</p>
+					<input type="text" name="priv_network_ip">
 				</label>
 
 				<button type="submit" class="save">Create VM</button>
