@@ -1,7 +1,7 @@
 'use strict';
 
 const path = require('path');
-const logger = require('./logger');
+const logger = require('../logger');
 const express = require('express');
 const config = {
 	port: 80,

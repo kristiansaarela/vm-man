@@ -1,234 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Hello</title>
-	<style type="text/css">
-		html, body {
-			height: 99.3%;
-			overflow-y: hidden;
-		}
-
-		.flex-container {
-			display: flex;
-			flex-direction: row;
-			flex-wrap: nowrap;
-			justify-content: flex-start;
-			align-content: stretch;
-			align-items: flex-start;
-
-			height: 100%;
-		}
-
-		.flex-item {
-			order: 0;
-			flex: 0 1 auto;
-			align-self: stretch;
-
-			width: 50%;
-			height: 100%;
-
-			padding: 2%;
-		}
-
-		#form {
-			background: #eee;
-			font-family: Helvetica;
-		}
-
-		#console {
-			background: #333;
-			color: #eee;
-			font-family: Consolas;
-		}
-
-		label {
-			margin-bottom: 10%;
-			display: block;
-		}
-
-		input {
-			border-radius: 5px;
-			border: 1px solid #444;
-			padding: 5px;
-		}
-
-		input:focus {
-			border-radius: 5px;
-		}
-
-		button.save {
-			box-shadow: inset 0px 1px 0px 0px #d9fbbe;
-			background: -webkit-gradient( linear, left top, left bottom, color-stop(0.05, #b8e356), color-stop(1, #a5cc52) );
-			background-color: #b8e356;
-			border-radius: 5px;
-
-			border: 1px solid #83c41a;
-			display: inline-block;
-			color: #ffffff;
-
-			font-size: 15px;
-			font-weight: bold;
-			font-style: normal;
-			height: 40px;
-			line-height: 40px;
-			width: 95px;
-			text-decoration: none;
-			text-align: center;
-			text-shadow: 1px 1px 0px #86ae47;
-		}
-
-		button.save:hover {
-			background: -webkit-gradient( linear, left top, left bottom, color-stop(0.05, #a5cc52), color-stop(1, #b8e356) );
-			background-color: #a5cc52;
-		}
-
-		button.save:active {
-			position: relative;
-			top: 1px;
-		}
-
-	</style>
-	<script type="text/javascript">
-		class SocketClient {
-			constructor() {
-				this.url = 'ws://localhost:81';
-				this.listeners = [];
-				this.connect();
-			}
-
-			connect() {
-				let self = this;
-
-				this.socket = new WebSocket(this.url);
-
-				this.socket.addEventListener('close', () => {
-					console.log('Socket connection closed');
-					setTimeout(() => {
-						self.connect();
-					}, 400);
-				}, false);
-
-				this.socket.addEventListener('message', (ev) => {
-					console.log('Socket message received', typeof ev.data, ev.data)
-					if (!self.listeners.length) {
-						return;
-					}
-					self.listeners.forEach((name, idx) => {
-						if (typeof self.listeners[idx] !== 'function') {
-							return;
-						}
-
-						self.listeners[idx](ev.data);
-					});
-				})
-			}
-
-			send(data) {
-				console.log('Socket sending data');
-				 // TODO: queue in case conn is lost
-				this.socket.send(data);
-			}
-
-			sendJSON(json) {
-				this.send(JSON.stringify(json));
-			}
-
-			onMessage(callback) {
-				this.listeners.push(callback);
-			}
-		}
-
-		const socket = new SocketClient();
-
-		socket.onMessage((data) => {
-			let json = null
-			let text = null
-
-			try {
-				json = JSON.parse(data)
-			} catch (err) {
-				text = data
-			}
-
-			if (json) {
-				handleJSON(json)
-			}
-
-			if (text) {
-				console.log('msg: ', data);
-			}
-		});
-
-		// Helpers
-		function $(id) { return document.getElementById(id); }
-		function byClass (el, cl) { return el ? el.getElementsByClassName(cl) : [] }
-		const formToJSON = elements => [].reduce.call(elements, (data, element) => {
-			data[element.name] = element.value;
-			return data;
-		}, {});
-
-
-		function construct() {
-			const form = $('new-vm');
-
-			form.addEventListener('submit', (ev) => {
-				ev.preventDefault();
-
-				socket.send(JSON.stringify({
-					action: form.id,
-					data: formToJSON(form.elements)
-				}));
-			});
-		}
-
-		function handleJSON(json) {
-			switch (json.action) {
-				case 'console': {
-					const p = document.createElement('p')
-
-					p.innerText = json.data
-					$('console').appendChild(p)
-				}
-				break;
-			}
-		}
-
-		window.addEventListener('load', construct, false);
-	</script>
+	<title>vm-man</title>
+	<link rel="stylesheet" type="text/css" href="bundle.css">
+	<script type="text/javascript" src="bundle.js"></script>
 </head>
 <body>
 	<div class="flex-container">
-		<div class="flex-item" id="form">
-			<form id="new-vm">
-				<!--/*
-				 - performance: cpu, memory
-				 - port forwards
-				 - enable host manager
-				   - hostname
-				   - aliasses
-				 - inline shell scripts
-				   - run always?
+		<div class="flex-row top">
+			<div class="flex-item" id="form">
+				<form id="new-vm">
+					<!--/*
+					 - performance: cpu, memory
+					 - port forwards
+					 - enable host manager
+					   - hostname
+					   - aliasses
+					 - inline shell scripts
+					   - run always?
 
-				*/-->
-				<label>
-					<p>VM name (defaults to dev)</p>
-					<input type="text" name="vm_name">
-				</label>
+					*/-->
+					<label>
+						<p>VM name (defaults to dev)</p>
+						<input type="text" name="vm_name">
+					</label>
 
-				<label>
-					<p>Base box (defaults to ubuntu/bionic64)</p>
-					<input type="text" name="box">
-				</label>
+					<label>
+						<p>Base box (defaults to ubuntu/bionic64)</p>
+						<input type="text" name="box">
+					</label>
 
-				<label>
-					<p>Private network IP (defaults to 192.168.2.10)</p>
-					<input type="text" name="priv_network_ip">
-				</label>
+					<label>
+						<p>Private network IP (defaults to 192.168.2.10)</p>
+						<input type="text" name="priv_network_ip">
+					</label>
 
-				<button type="submit" class="save">Create VM</button>
-			</form>
+					<button type="submit" class="save">Create VM</button>
+				</form>
+			</div>
+			<div class="flex-item" id="visual">
+				<canvas></canvas>
+			</div>
 		</div>
-		<div class="flex-item" id="console"></div>
+		<div class="flex-row bottom">	
+			<div class="flex-item" id="console">
+				<div></div>
+				<input type="text" name="console">
+			</div>
+		</div>
 	</div>
 </body>
 </html>

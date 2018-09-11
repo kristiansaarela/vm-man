@@ -1,6 +1,6 @@
 'use strict';
 
-const logger = require('./logger');
+const logger = require('../logger');
 const { existsSync, mkdirSync } = require('fs');
 
 module.exports = function mkdir (dir_path) {

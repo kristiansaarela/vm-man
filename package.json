@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server": "nodemon src/server/socketServer.js && nodemon src/server/httpServer.js",
+    "client": "watchify src/client/index.js -o public/bundle.js -v"
   },
   "author": "",
   "license": "ISC",
@@ -13,5 +15,8 @@
     "lodash": "^4.17.10",
     "node-ssh": "^5.1.2",
     "ws": "^6.0.0"
+  },
+  "devDependencies": {
+    "watchify": "^3.11.0"
   }
 }

@@ -2,3 +2,4 @@
 .vagrant/
 Vagrantfile
 node_modules/
+vms/
