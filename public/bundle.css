@@ -1,54 +1,89 @@
 html {
 	height: 100vh;
 }
+body {
+	height: 100vh;
+	margin: 0;
+}
 
 .flex-container {
 	display: flex;
 	flex-direction: column;
-	justify-content: space-evenly;
+	justify-content: space-around;
 	align-items: flex-start;
 	align-content: stretch;
+
+	height: 100%;
 }
 .flex-row {
-	height: 49vh;
 	display: flex;
-}
 
-#form {
-	background: #999;
-	width: 49vw;
+	height: 49vh;
 
-	font-family: Helvetica;
-}
-#visual {
-	background: #555;
-	width: 50vw;
-}
-#console {
-	background: #333;
 	width: 99vw;
+	margin: 0 auto;
+}
+.flex-item {
+	width: 100%;
+}
 
+
+
+#dashboard {
+	background: #555;
+}
+
+
+
+#console {
 	color: #eee;
 	font-family: Consolas;
-	overflow-y: scroll;
+	background: #333;
+}
+#console-text {
+	min-height: 95%;
+	max-height: 95%;
+    overflow-y: scroll;
+}
+#console-text p {
+	margin: 0 1vw;
+	white-space: pre;
+}
+#console-input {
+	min-height: 5%;
+	margin: 0 1vw;
+}
+#console-input input {
+	display: block;
+	padding: 3px 0;
+	margin: 0;
+	border: none;
+
+	width: 100%;
+
+	font-family: Consolas;
+	font-size: 16px;
+	color: #eee;
+	background: #333;
+	border-top: 2px solid #eee;
+}
+#console-input input:focus {
+	outline: none;
 }
 
-
+/*
 label {
 	margin-bottom: 10%;
 	display: block;
 }
-
 input {
 	border-radius: 5px;
 	border: 1px solid #444;
 	padding: 5px;
 }
-
 input:focus {
 	border-radius: 5px;
 }
-
 button.save {
 	box-shadow: inset 0px 1px 0px 0px #d9fbbe;
 	background: -webkit-gradient( linear, left top, left bottom, color-stop(0.05, #b8e356), color-stop(1, #a5cc52) );
@@ -79,3 +114,4 @@ button.save:active {
 	position: relative;
 	top: 1px;
 }
+*/
