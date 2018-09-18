@@ -32,6 +32,30 @@ body {
 #dashboard {
 	background: #555;
 }
+#dashboard .buttons {
+	padding: 0.5vw;
+}
+#machine-map {
+	padding: 0.5vw;
+}
+#machine-map .machine-item {
+	display: inline-block;
+	cursor: pointer;
+}
+#machine-map .machine-name {
+	text-align: center;
+	border: 1px solid #fff;
+	color: #eee;
+	padding: 4px 5px;
+	margin: 0;
+}
+#machine-map .machine-ip {
+	text-align: center;
+	color: #ccc;
+	font-family: Consolas;
+	margin: 0;
+	padding: 4px 5px;
+}
 
 
 
