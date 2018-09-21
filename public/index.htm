@@ -10,7 +10,7 @@
 		<div class="flex-row top">
 			<div class="flex-item" id="dashboard">
 				<div class="buttons">
-					<button name="new-vm">New VM</button>
+					<button id="new-vm-btn" name="new-vm">New VM</button>
 				</div>
 				<div id="machine-map">
 					<div class="machine-item">
@@ -62,8 +62,40 @@
 			</div>
 		</div>
 	</div>
+	<div class="popup-container">
+		<div class="popup-content">
+			<form id="new-vm">
+				<!--/*
+				 - performance: cpu, memory
+				 - port forwards
+				 - enable host manager
+				   - hostname
+				   - aliasses
+				 - inline shell scripts
+				   - run always?
 
-	<div style="display:none;">
+				*/-->
+				<label>
+					<p>VM name (defaults to dev)</p>
+					<input type="text" name="vm_name">
+				</label>
+
+				<label>
+					<p>Base box (defaults to ubuntu/bionic64)</p>
+					<input type="text" name="box">
+				</label>
+
+				<label>
+					<p>Private network IP (defaults to 192.168.2.10)</p>
+					<input type="text" name="priv_network_ip">
+				</label>
+
+				<button type="submit" class="save">Create VM</button>
+			</form>
+		</div>
+	</div>
+
+	<div id="hidden-forms" style="display:none;">
 		<form id="new-vm">
 			<!--/*
 			 - performance: cpu, memory

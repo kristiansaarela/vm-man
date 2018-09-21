@@ -20,6 +20,11 @@ function construct() {
 	const ws = new SocketClient(config);
 	ws.onMessage(handleSocketMessage);
 
+	$('new-vm-btn').addEventListener('click', (ev) => {
+
+	}, false)
+
+	/*
 	const form = $('new-vm');
 
 	form.addEventListener('submit', (ev) => {
@@ -30,6 +35,17 @@ function construct() {
 			data: formToJSON(form.elements)
 		}));
 	});
+	*/
+}
+
+function openform(id) {
+	const form = $(id)
+
+	if (form.length) {
+		throw new Error(`Form #${id} not found!`);
+	}
+
+
 }
 
 function handleSocketMessage(data) {
