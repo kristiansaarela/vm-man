@@ -1,51 +1,64 @@
 'use strict';
 
 const SocketClient = require('./SocketClient');
+const { $, byClass, formToJSON, elShow, noshow } = require('./utils')
+
 const config = {
 	server_url: 'ws://localhost:81',
 };
 
+
+const ws = new SocketClient(config);
+ws.onMessage(handleSocketMessage);
+
 window.addEventListener('load', construct, false);
 
-// helpers
-function $(id) { return document.getElementById(id); }
-function byClass (el, cl) { return el ? el.getElementsByClassName(cl) : [] }
-const formToJSON = elements => [].reduce.call(elements, (data, element) => {
-	data[element.name] = element.value;
-	return data;
-}, {});
-// end of help
 
 function construct() {
-	const ws = new SocketClient(config);
-	ws.onMessage(handleSocketMessage);
+	new Popup()
 
-	$('new-vm-btn').addEventListener('click', (ev) => {
+	$('new-vm-btn').addEventListener('click', () => {
+		const container = byClass(document, 'popup-container')[0];
+		const content = byClass(document, 'popup-content')[0];
+		let form = byClass($('hidden-forms'), 'new-vm')[0]
+		form = form.cloneNode(true)
 
+		noshow(container)
+		content.innerHTML = ''
+		content.append(form)
+		elShow(container)
+
+		// init new content
+		form.addEventListener('submit', (ev) => {
+			ev.preventDefault()
+
+			ws.send(JSON.stringify({
+				action: 'new-vm',
+				data: formToJSON(form.elements)
+			}))
+
+			container.close()
+		}, false)
 	}, false)
-
-	/*
-	const form = $('new-vm');
-
-	form.addEventListener('submit', (ev) => {
-		ev.preventDefault();
-
-		ws.send(JSON.stringify({
-			action: form.id,
-			data: formToJSON(form.elements)
-		}));
-	});
-	*/
 }
 
-function openform(id) {
-	const form = $(id)
+class Popup {
+	constructor() {
+		let self = this
 
-	if (form.length) {
-		throw new Error(`Form #${id} not found!`);
+		this.node = byClass(document, 'popup-container')[0]
+
+		this.node.close = () => {
+			noshow(self.node)
+			self.node.dispatchEvent(new Event('close'))
+		}
+
+		this.node.addEventListener('click', (ev) => {
+			if (ev.target && ev.target === self.node) {
+				self.node.close()
+			}
+		})
 	}
-
-
 }
 
 function handleSocketMessage(data) {
@@ -70,15 +83,30 @@ function handleSocketMessage(data) {
 function handleJSON(json) {
 	switch (json.action) {
 		case 'console': {
-			const console = $('console');
+			const dest = $('console-text');
 			const p = document.createElement('p');
 
 			// using text so no html parsing here
 			p.innerText = json.data;
 			// print to console
-			console.appendChild(p);
+			dest.appendChild(p);
 			// scroll to bottom
-			console.scrollTop = console.scrollHeight - console.clientHeight;
+			dest.scrollTop = dest.scrollHeight - dest.clientHeight;
+		}
+		break;
+		case 'hello': {
+			const vms = json.data
+
+			vms.forEach((vm_name) => {
+				ws.sendJSON({
+					action: 'vm-status',
+					data: { vm_name },
+				})
+			})
+		}
+		break;
+		case 'vm-status': {
+			console.log(json.data)
 		}
 		break;
 	}
