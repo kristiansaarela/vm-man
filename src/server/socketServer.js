@@ -26,6 +26,14 @@ logger.info('Socket server started', config);
 
 // TODO: handle dropped clients
 wss.on('connection', (ws) => {
+	ws.sendJSON = function sendJSON (payload) {
+		if (this.readyState === 1) {
+			this.send(JSON.stringify(payload));
+		} else {
+			logger.error('TODO: queue this and send later')
+		}
+	};
+
 	ws.send(JSON.stringify({
 		action: 'hello',
 		data: getListOfVMs(),
@@ -69,26 +77,29 @@ function pipeToClientConsole(client, data) {
 function handleJSON (client, data) {
 	switch (data.action) {
 		case 'new-vm': {
-			const template_vars = _.merge({}, data.data, {
-				vm_name: 'dev',
-				box: 'ubuntu/bionic64',
-				priv_network_ip: '192.168.2.10',
-			});
-
+			const template_vars = mergeMachineConfig(data.data)
 			const template = generateVagrantfile(template_vars);
-			const vm_path = path.join(process.cwd(), 'vms', template_vars.vm_name);
-			
+			const vm_path = path.join(process.cwd(), 'vms', template_vars.name);
+
 			savefile(vm_path, 'Vagrantfile', template);
 			savefile(vm_path, 'vagrant.json', JSON.stringify(template_vars));
 
+			if (!data.data._start)
+				return
+
 			const vagrant = runCommand(vm_path, 'vagrant', ['up'])
 			vagrant.on('data', chunk => pipeToClientConsole(client, chunk.toString()))
+			/*
 			vagrant.on('end', async () => {
+				
+			})
+
+			async function sshToMachine() {
 				const ssh = new node_ssh()
 
 				try {
 					await ssh.connect({ port: 2222, host: '127.0.0.1', username: 'vagrant',
-						privateKey: path.join(vm_path, '.vagrant', 'machines', template_vars.vm_name, 'virtualbox', 'private_key')
+						privateKey: path.join(vm_path, '.vagrant', 'machines', template_vars.name, 'virtualbox', 'private_key')
 					})
 				} catch (error) {
 					// TODO: How do display errors?
@@ -102,79 +113,63 @@ function handleJSON (client, data) {
 							pipeToClientConsole(client, chunk.toString('utf8'))
 						},
 						onStderr(chunk) {
-							console.log('stderrChunk', chunk.toString('utf8'))
+							logger.debug('stderrChunk', chunk.toString('utf8'))
 							pipeToClientConsole(client, chunk.toString('utf8'))
 						}
 					})
 				} catch (error) {
-					return pipeToClientConsole(close, error.message)
+					return pipeToClientConsole(client, error.message)
 				}
-			})
-
-			/*
-			vagrant.on('close', (code) => {
-				ws.send(JSON.stringify({
-					action: 'console',
-					data: `exit code: ${code}`,
-				}));
-
-				if (code === 0) {
-					const sshConfig = spawn('vagrant', ['ssh-config'], { cwd: vm_path });
-					sshConfig.stdout.on('data', (chunk) => {
-						console.log(chunk.toString())
-					})
-
-					const ssh = new node_ssh()
-				
-					// ssh vagrant@127.0.0.1 -p 2200 -i ./.vagrant/machines/dev/virtualbox/private_key
-					// ssh vagrant@127.0.0.1 -p 2222 -o Compression=yes -o DSAAuthentication=yes -o LogLevel=FATAL -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -i ~/.vagrant.d/less_insecure_private_key -o ForwardAgent=yes
-
-					ssh.connect({
-						port: 2200,
-						host: 'localhost',
-						username: 'vagrant',
-						//privateKey: ''
-					})
-					/*
-					const vm_node = spawn('vagrant', ['ssh', template_vars.vm_name], { cwd: vm_path })
-
-					vm_node.stdout.on('data', (chunk) => {
-						console.log('stdout', chunk.toString());
-
-						ws.send(JSON.stringify({
-							action: 'console',
-							data: chunk.toString(),
-						}));
-					});
-
-					vm_node.stderr.on('data', (chunk) => {
-						console.log('stderr', chunk.toString());
-
-						ws.send(JSON.stringify({
-							action: 'console',
-							data: chunk.toString(),
-						}));
-					});
-
-					vm_node.on('close', (code) => {
-						ws.send(JSON.stringify({
-							action: 'console',
-							data: `exit code: ${code}`,
-						}));
-					});
-					*/
-					/*
-				}
-			});
+			}
 			*/
 		}
 		break;
+		case 'vm-config': 
+			client.sendJSON({
+				action: 'vm-config',
+				data: getVMConfig(data.data.name) // TODO: Bad bad bad, trusting too much
+			})
+		break
 		case 'vm-status':
-			const vm_path = path.join(process.cwd(), 'vms', data.data.vm_name); // TODO: bad idea
-			const vagrant = runCommand(vm_path, 'vagrant', ['status'])
-			vagrant.on('data', chunk => pipeToClientConsole(client, chunk.toString()))
+			const vm_path = path.join(process.cwd(), 'vms', data.data.name); // TODO: bad idea. Why? - trusting client, that's why
+			const vagrant = runCommand(vm_path, 'vagrant', ['status'], { ignoreClose: true })
+			
+			vagrant.on('data', chunk => {
+				const output = chunk.toString();
+				const matches = output.match(/(\w+)(\s+)(\w+) \(virtualbox\)/);
+
+				if (matches === null) {
+					logger.error('vm-status: no matches found', { output, name: data.data.name })
+					return
+				}
+
+				client.sendJSON({
+					action: 'vm-status',
+					data: {
+						name: data.data.name,
+						status: matches[3],
+					},
+				})
+			})
 		break;
 	}
+}
+
+function mergeMachineConfig(payload) {
+	const defaults = {
+		name: 'dev',
+		box: 'ubuntu/bionic64',
+		priv_network_ip: '192.168.2.10',
+		started: false,
+	}
+
+	Object.keys(defaults).forEach(key => {
+		if (payload[key] && payload[key] !== '') {
+			defaults[key] = payload[key];
+		}
+	})
+
+	return defaults
 }
 
 function generateVagrantfile(variables) {
@@ -186,47 +181,44 @@ function generateVagrantfile(variables) {
 		template = template.replaceAll(pattern, variables[key]);
 	});
 
-	logger.log('new vm Vagrantfile generated');
+	logger.log('new vm Vagrantfile generated', { template });
 
 	return template;
 }
 
 function savefile(filedir, filename, contents) {
 	mkdir(filedir);
+	logger.log('saving file', { filedir, filename, contents })
 	fs.writeFileSync(path.join(filedir, filename), contents);
 }
 
 function getListOfVMs() {
-	return [ 'dev' ]
+	const vms_path = path.join(process.cwd(), 'vms');
+	const vms = fs.readdirSync(vms_path, { withFileTypes: true }).filter(item => item.isDirectory());
+
+	return vms;
 }
 
-// runCommand(path, vagrant, ['up'])
-function runCommand(path, cmd, args) {
+function getVMConfig(vm_name) {
+	// TODO: error handling
+	let cfg = fs.readFileSync(path.join(process.cwd(), 'vms', vm_name, 'vagrant.json')).toString()
+	return JSON.parse(cfg)
+}
+
+// runCommand(path, vagrant, ['up'], { ignoreClose: true })
+function runCommand(path, cmd, args, opts = {}) {
 	const ps = spawn(cmd, args, { cwd: path });
 	const output = new Readable({ read() {} });
 
 	ps.stdout.on('data', (chunk) => output.push(chunk));
 	ps.stderr.on('data', (chunk) => output.push(chunk));
 
-	ps.on('close', (code) => {
-		output.push(`exit code: ${code}`)
-		output.push(null)
-	});
+	if (!opts.ignoreClose) {
+		ps.on('close', (code) => {
+			output.push(`exit code: ${code}`)
+			output.push(null)
+		});
+	}
 
 	return output;
-}
-
-function runCommandSync(path, cmd, args) {
-	const deferred = Promise.defer()
-
-	const ps = runCommand(path, cmd, args)
-	const output = '';
-
-	ps.on('data', (chunk) => {
-		output += chunk.toString()
-	})
-
-	ps.on('end', deferred.resolve(output))
-
-	return deferred.promise
 }

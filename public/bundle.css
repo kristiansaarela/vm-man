@@ -43,15 +43,26 @@ body {
 #machine-map .machine-item {
 	display: inline-block;
 	cursor: pointer;
+	margin: 1vh;
 }
-#machine-map .machine-name {
+
+.machine-item .box {
+	border: 1px solid white;
+}
+.machine-item .machine-name {
 	text-align: center;
-	border: 1px solid #fff;
 	color: #eee;
 	padding: 4px 5px;
 	margin: 0;
 }
-#machine-map .machine-ip {
+.machine-item .machine-status {
+	text-align: center;
+	color: #eee;
+	font-size: 9pt;
+	padding: 3px 4px;
+	margin: 0;
+}
+.machine-item .machine-ip {
 	text-align: center;
 	color: #ccc;
 	font-family: Consolas;
@@ -59,6 +70,12 @@ body {
 	padding: 4px 5px;
 }
 
+.machine-status.aborted {
+	color: yellow;
+}
+.machine-status.running {
+	color: green;
+}
 
 
 #console {

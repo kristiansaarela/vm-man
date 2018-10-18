@@ -13,48 +13,14 @@
 					<button id="new-vm-btn" name="new-vm">New VM</button>
 				</div>
 				<div id="machine-map">
-					<div class="machine-item">
-						<p class="machine-name">dev</p>
-						<p class="machine-ip">192.168.2.10</p>
-					</div>
+					
 				</div>
 			</div>
 		</div>
 		<div class="flex-row bottom">
 			<div class="flex-item" id="console">
 				<div id="console-text">
-					<p>Bringing machine 'dev' up with 'virtualbox' provider...</p>
-					<p>==> dev: Checking if box 'ubuntu/xenial64' is up to date...</p>
-					<p>==> dev: Clearing any previously set forwarded ports...</p>
-					<p>==> dev: Clearing any previously set network interfaces...</p>
-					<p>==> dev: Preparing network interfaces based on configuration...</p>
-					<p>    dev: Adapter 1: nat</p>
-					<p>    dev: Adapter 2: hostonly</p>
-					<p>==> dev: Forwarding ports...</p>
-					<p>    dev: 22 (guest) => 2222 (host) (adapter 1)</p>
-					<p>==> dev: Running 'pre-boot' VM customizations...</p>
-					<p>==> dev: Booting VM...</p>
-					<p>==> dev: Waiting for machine to boot. This may take a few minutes...</p>
-					<p>    dev: SSH address: 127.0.0.1:2222</p>
-					<p>    dev: SSH username: vagrant</p>
-					<p>    dev: SSH auth method: private key</p>
-					<p>==> dev: Machine booted and ready!</p>
-					<p>==> dev: Checking for guest additions in VM...</p>
-					<p>    dev: The guest additions on this VM do not match the installed version of</p>
-					<p>    dev: VirtualBox! In most cases this is fine, but in rare cases it can</p>
-					<p>    dev: prevent things such as shared folders from working properly. If you see</p>
-					<p>    dev: shared folder errors, please make sure the guest additions within the</p>
-					<p>    dev: virtual machine match the version of VirtualBox you have installed on</p>
-					<p>    dev: your host and reload your VM.</p>
-					<p>    dev:</p>
-					<p>    dev: Guest Additions Version: 5.1.34</p>
-					<p>    dev: VirtualBox Version: 5.2</p>
-					<p>==> dev: Setting hostname...</p>
-					<p>==> dev: Configuring and enabling network interfaces...</p>
-					<p>==> dev: Machine already provisioned. Run `vagrant provision` or use the `--provision`</p>
-					<p>==> dev: flag to force provisioning. Provisioners marked to run always will still run.</p>
-					<p>==> dev: Running provisioner: shell...</p>
-					<p>    dev: Running: inline script</p>
+					
 				</div>
 				<div id="console-input">
 					<input type="text" name="console-input">
@@ -64,34 +30,7 @@
 	</div>
 	<div class="popup-container hidden">
 		<div class="popup-content">
-			<form class="new-vm">
-				<!--/*
-				 - performance: cpu, memory
-				 - port forwards
-				 - enable host manager
-				   - hostname
-				   - aliasses
-				 - inline shell scripts
-				   - run always?
 
-				*/-->
-				<label>
-					<p>VM name (defaults to dev)</p>
-					<input type="text" name="vm_name">
-				</label>
-
-				<label>
-					<p>Base box (defaults to ubuntu/bionic64)</p>
-					<input type="text" name="box">
-				</label>
-
-				<label>
-					<p>Private network IP (defaults to 192.168.2.10)</p>
-					<input type="text" name="priv_network_ip">
-				</label>
-
-				<button type="submit" class="save">Create VM</button>
-			</form>
 		</div>
 	</div>
 
@@ -109,7 +48,7 @@
 			*/-->
 			<label>
 				<p>VM name (defaults to dev)</p>
-				<input type="text" name="vm_name">
+				<input type="text" name="name">
 			</label>
 
 			<label>
@@ -122,8 +61,21 @@
 				<input type="text" name="priv_network_ip">
 			</label>
 
-			<button type="submit" class="save">Create VM</button>
+			<label>
+				<button id="create-start" type="submit" class="save">Create and run VM</button>
+				<button id="create" type="submit" class="save">Create VM</button>
+			</label>
 		</form>
+	</div>
+
+	<div id="hidden-elements" style="display:none;">
+		<div class="machine-item" data-name="">
+			<div class="box">
+				<p class="machine-name"></p>
+				<p class="machine-status">loading...</p>
+			</div>
+			<p class="machine-ip"></p>
+		</div>
 	</div>
 </body>
 </html>

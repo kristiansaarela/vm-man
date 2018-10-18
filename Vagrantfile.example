@@ -17,7 +17,7 @@ Vagrant.configure(2) do |config|
   ## Default configuration, and optional local overrides
   settings = {
     "debug" => false,
-    "{vars.vm_name}" => {
+    "{vars.name}" => {
       "memory" => 1000,
       "cpus"   => 2,
       "forwards" => {}
@@ -43,7 +43,7 @@ Vagrant.configure(2) do |config|
   config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/home/vagrant/.ssh/id_rsa.pub"
   config.vm.provision "file", source: "~/.ssh/id_rsa", destination: "/home/vagrant/.ssh/id_rsa"
 
-  config.vm.define :{vars.vm_name}, primary: true do |node|
+  config.vm.define :{vars.name}, primary: true do |node|
     node.vm.box = "{vars.box}"
     #node.vm.box_version = "20180509.0.0" # Some versions forget to add 'vagrant' user...
 
@@ -51,8 +51,8 @@ Vagrant.configure(2) do |config|
 
     node.vm.provider "virtualbox" do |virtualbox|
       # Assign CPU and Memory limits
-      virtualbox.memory = settings["{vars.vm_name}"]["memory"]
-      virtualbox.cpus   = settings["{vars.vm_name}"]["cpus"]
+      virtualbox.memory = settings["{vars.name}"]["memory"]
+      virtualbox.cpus   = settings["{vars.name}"]["cpus"]
     end
 
     # Set IP and local hostname
@@ -61,8 +61,8 @@ Vagrant.configure(2) do |config|
     #node.hostmanager.aliases = ""
 
     # Set up configured port forwards
-    if settings["{vars.vm_name}"] && settings["{vars.vm_name}"]["forwards"]
-      settings["{vars.vm_name}"]["forwards"].each do |src, dst|
+    if settings["{vars.name}"] && settings["{vars.name}"]["forwards"]
+      settings["{vars.name}"]["forwards"].each do |src, dst|
         node.vm.network "forwarded_port", guest: src, host: dst
       end
     end
